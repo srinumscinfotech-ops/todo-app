@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List</title>
+<style>
+  /* ---------- Design tokens ---------- */
+  :root {
+    --paper: #f6f4ee;
+    --ink: #26261f;
+    --ink-soft: #6b6a5e;
+    --line: #ddd9cc;
+    --moss: #4a5d43;
+    --moss-dark: #384732;
+    --clay: #b5533c;
+    --card: #ffffff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Georgia", "Iowan Old Style", serif;
+    display: flex;
+    justify-content: center;
+    padding: 48px 20px;
+  }
+
+  main {
+    width: 100%;
+    max-width: 520px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 400;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    margin: 0 0 28px 0;
+    font-style: italic;
+  }
+
+  /* ---------- Add-task row ---------- */
+  #task-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: 1rem;
+    font-family: inherit;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--ink);
+  }
+
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--moss);
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+  }
+
+  #task-form button {
+    padding: 12px 20px;
+    background: var(--moss);
+    color: #fff;
+    transition: background 0.15s ease;
+  }
+
+  #task-form button:hover { background: var(--moss-dark); }
+
+  /* ---------- Search box ---------- */
+  #search-wrap {
+    margin-bottom: 18px;
+  }
+
+  #search-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--ink);
+  }
+
+  #search-input:focus {
+    outline: none;
+    border-color: var(--moss);
+  }
+
+  #search-input::placeholder {
+    color: var(--ink-soft);
+  }
+
+  /* ---------- Status filter buttons ---------- */
+  #filter-wrap {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+
+  button.filter-btn {
+    padding: 7px 16px;
+    font-size: 0.85rem;
+    background: none;
+    color: var(--ink-soft);
+    border: 1.5px solid var(--line);
+  }
+
+  button.filter-btn:hover {
+    border-color: var(--moss);
+    color: var(--ink);
+  }
+
+  button.filter-btn.active {
+    background: var(--moss);
+    border-color: var(--moss);
+    color: #fff;
+  }
+
+  /* ---------- Task list ---------- */
+  ul#task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  li.task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  li.task input[type="checkbox"] {
+    width: 19px;
+    height: 19px;
+    accent-color: var(--moss);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  li.task span.text {
+    flex: 1;
+    font-size: 1.05rem;
+    word-break: break-word;
+  }
+
+  li.task.completed span.text {
+    text-decoration: line-through;
+    color: var(--ink-soft);
+  }
+
+  li.task button.delete-btn {
+    background: none;
+    color: var(--clay);
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    opacity: 0.7;
+  }
+
+  li.task button.delete-btn:hover { opacity: 1; }
+
+  li.task button.edit-btn {
+    background: none;
+    color: var(--moss);
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    opacity: 0.7;
+  }
+
+  li.task button.edit-btn:hover { opacity: 1; }
+
+  li.task input.edit-input {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    border: 1.5px solid var(--moss);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--ink);
+  }
+
+  li.task input.edit-input:focus {
+    outline: none;
+  }
+
+  li.task button.save-btn {
+    background: var(--moss);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+  }
+
+  li.task button.save-btn:hover { background: var(--moss-dark); }
+
+  li.task button.cancel-btn {
+    background: none;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    opacity: 0.7;
+  }
+
+  li.task button.cancel-btn:hover { opacity: 1; }
+
+  .empty-state {
+    text-align: center;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 40px 0;
+  }
+
+  .counter {
+    margin-top: 16px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <h1>To-Do List</h1>
+  <p class="subtitle">What are you getting done today?</p>
+
+  <!-- The row where you type a new task and add it -->
+  <div id="task-form">
+    <input type="text" id="task-input" placeholder="Add a task..." autocomplete="off">
+    <button type="button" id="add-btn">Add</button>
+  </div>
+
+  <!-- Search box: filters the list below as you type -->
+  <div id="search-wrap">
+    <input type="text" id="search-input" placeholder="Search tasks..." autocomplete="off">
+  </div>
+
+  <!-- Status filter: choose which tasks are shown -->
+  <div id="filter-wrap">
+    <button type="button" class="filter-btn" data-filter="all">All</button>
+    <button type="button" class="filter-btn" data-filter="active">Active</button>
+    <button type="button" class="filter-btn" data-filter="completed">Completed</button>
+  </div>
+
+  <!-- Tasks get inserted here by JavaScript -->
+  <ul id="task-list"></ul>
+
+  <p class="counter" id="counter"></p>
+</main>
+
+<script>
+  // ---------------------------------------------------------
+  // STEP 1: Grab references to the HTML elements we need
+  // ---------------------------------------------------------
+  const input = document.getElementById('task-input');
+  const addBtn = document.getElementById('add-btn');
+  const searchInput = document.getElementById('search-input');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const list = document.getElementById('task-list');
+  const counter = document.getElementById('counter');
+
+  // ---------------------------------------------------------
+  // STEP 2: Our "database" - just an array that lives in memory
+  // while the page is open. Each task is an object:
+  // { id, text, completed }
+  //
+  // We TRY to load any previously saved tasks from localStorage,
+  // so your list survives a page refresh. This is wrapped in a
+  // try/catch because some sandboxed previews block localStorage
+  // entirely - if that happens, we just start with an empty list
+  // instead of letting the whole app break.
+  // ---------------------------------------------------------
+  let tasks = [];
+  try {
+    const saved = localStorage.getItem('tasks');
+    if (saved) tasks = JSON.parse(saved);
+  } catch (err) {
+    console.warn('localStorage unavailable, tasks will not persist:', err);
+  }
+
+  // editingId tracks which task (by id) is currently being edited,
+  // so renderTasks() knows to show an input box instead of plain
+  // text for that one task. null means nothing is being edited.
+  let editingId = null;
+
+  // searchQuery holds whatever's currently typed in the search box.
+  // renderTasks() uses it to only show matching tasks. It doesn't
+  // touch the real `tasks` array - it's just a display filter.
+  let searchQuery = '';
+
+  // statusFilter is one of 'all' | 'active' | 'completed', set by
+  // the filter buttons. Like searchQuery, it's just a display
+  // filter - it never changes the real tasks array.
+  let statusFilter = 'all';
+
+  // ---------------------------------------------------------
+  // STEP 3: Save the current tasks array to localStorage.
+  // Called any time the data changes (add/toggle/delete).
+  // Also wrapped in try/catch for the same reason as above -
+  // a blocked storage API should never be able to break a button.
+  // ---------------------------------------------------------
+  function saveTasks() {
+    try {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    } catch (err) {
+      console.warn('Could not save tasks to localStorage:', err);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // STEP 3: Render the tasks array onto the page.
+  // This wipes the list and rebuilds it from scratch every time.
+  // Simple to reason about, plenty fast for a to-do list.
+  // ---------------------------------------------------------
+  function renderTasks() {
+    list.innerHTML = ''; // clear whatever is currently shown
+
+    // Highlight whichever filter button matches the current statusFilter
+    filterBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === statusFilter);
+    });
+
+    // Start from the full task list, then narrow it down step by step:
+    // first by status (all/active/completed), then by the search box.
+    let visibleTasks = tasks;
+
+    if (statusFilter === 'active') {
+      visibleTasks = visibleTasks.filter(task => !task.completed);
+    } else if (statusFilter === 'completed') {
+      visibleTasks = visibleTasks.filter(task => task.completed);
+    }
+
+    const query = searchQuery.trim().toLowerCase();
+    if (query !== '') {
+      visibleTasks = visibleTasks.filter(task => task.text.toLowerCase().includes(query));
+    }
+
+    if (tasks.length === 0) {
+      list.innerHTML = '<li class="empty-state">No tasks yet. Add one above.</li>';
+      counter.textContent = '';
+      return;
+    }
+
+    if (visibleTasks.length === 0) {
+      const message = query !== ''
+        ? 'No tasks match your search.'
+        : statusFilter === 'active'
+          ? 'No active tasks. Nice work!'
+          : 'No completed tasks yet.';
+      list.innerHTML = `<li class="empty-state">${message}</li>`;
+      counter.textContent = '';
+      return;
+    }
+
+    visibleTasks.forEach(task => {
+      // Create the <li> that represents one task
+      const li = document.createElement('li');
+      li.className = 'task' + (task.completed ? ' completed' : '');
+
+      // Checkbox to mark complete/incomplete
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = task.completed;
+      checkbox.addEventListener('change', () => toggleTask(task.id));
+      li.appendChild(checkbox);
+
+      if (task.id === editingId) {
+        // ---- EDIT MODE: show a text input + Save/Cancel ----
+        const editInput = document.createElement('input');
+        editInput.type = 'text';
+        editInput.className = 'edit-input';
+        editInput.value = task.text;
+
+        // Pressing Enter saves, pressing Escape cancels
+        editInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') saveEdit(task.id, editInput.value);
+          if (event.key === 'Escape') cancelEdit();
+        });
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'save-btn';
+        saveBtn.textContent = 'Save';
+        saveBtn.addEventListener('click', () => saveEdit(task.id, editInput.value));
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'cancel-btn';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.addEventListener('click', () => cancelEdit());
+
+        li.appendChild(editInput);
+        li.appendChild(saveBtn);
+        li.appendChild(cancelBtn);
+        list.appendChild(li);
+
+        // Focus and select the text so you can start typing right away
+        editInput.focus();
+        editInput.select();
+        return; // skip the normal-mode markup below
+      }
+
+      // ---- NORMAL MODE: show the task text + Edit/Delete ----
+      const span = document.createElement('span');
+      span.className = 'text';
+      span.textContent = task.text;
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'edit-btn';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', () => startEdit(task.id));
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', () => deleteTask(task.id));
+
+      li.appendChild(span);
+      li.appendChild(editBtn);
+      li.appendChild(deleteBtn);
+      list.appendChild(li);
+    });
+
+    const remaining = visibleTasks.filter(t => !t.completed).length;
+    if (query === '') {
+      counter.textContent = `${remaining} of ${visibleTasks.length} remaining`;
+    } else {
+      counter.textContent = `${remaining} of ${visibleTasks.length} remaining (matching "${searchQuery.trim()}")`;
+    }
+  }
+
+  // ---------------------------------------------------------
+  // STEP 4: Add a new task
+  // ---------------------------------------------------------
+  function addTask(text) {
+    tasks.push({
+      id: Date.now(),       // simple unique ID based on the current time
+      text: text,
+      completed: false
+    });
+    saveTasks();
+    renderTasks();
+  }
+
+  // ---------------------------------------------------------
+  // STEP 5: Toggle a task's completed state
+  // ---------------------------------------------------------
+  function toggleTask(id) {
+    tasks = tasks.map(task =>
+      task.id === id ? { ...task, completed: !task.completed } : task
+    );
+    saveTasks();
+    renderTasks();
+  }
+
+  // ---------------------------------------------------------
+  // STEP 6: Delete a task
+  // ---------------------------------------------------------
+  function deleteTask(id) {
+    tasks = tasks.filter(task => task.id !== id);
+    saveTasks();
+    renderTasks();
+  }
+
+  // ---------------------------------------------------------
+  // STEP 6b: Editing a task's text.
+  // startEdit() just flips editingId and re-renders, which makes
+  // renderTasks() draw that one task in edit mode (see STEP 3).
+  // saveEdit() writes the new text back into the tasks array.
+  // cancelEdit() backs out without changing anything.
+  // ---------------------------------------------------------
+  function startEdit(id) {
+    editingId = id;
+    renderTasks();
+  }
+
+  function saveEdit(id, newText) {
+    newText = newText.trim();
+    if (newText === '') return; // ignore saving an empty task
+    tasks = tasks.map(task =>
+      task.id === id ? { ...task, text: newText } : task
+    );
+    editingId = null;
+    saveTasks();
+    renderTasks();
+  }
+
+  function cancelEdit() {
+    editingId = null;
+    renderTasks();
+  }
+
+  // ---------------------------------------------------------
+  // STEP 7: Wire up the Add button.
+  // handleAdd() reads the input, adds the task, then clears the box.
+  // We call it both when the button is clicked AND when Enter is
+  // pressed in the text field, so both ways of adding a task work.
+  // ---------------------------------------------------------
+  function handleAdd() {
+    const text = input.value.trim();
+    if (text === '') return; // ignore empty submissions
+    addTask(text);
+    input.value = '';
+    input.focus();
+  }
+
+  addBtn.addEventListener('click', handleAdd);
+
+  input.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+      handleAdd();
+    }
+  });
+
+  // ---------------------------------------------------------
+  // STEP 7b: Wire up the search box. Every keystroke updates
+  // searchQuery and re-renders, so the list filters live as you type.
+  // ---------------------------------------------------------
+  searchInput.addEventListener('input', function() {
+    searchQuery = searchInput.value;
+    renderTasks();
+  });
+
+  // ---------------------------------------------------------
+  // STEP 7c: Wire up the All / Active / Completed filter buttons.
+  // Each button's data-filter attribute ("all", "active", or
+  // "completed") becomes the new statusFilter value.
+  // ---------------------------------------------------------
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      statusFilter = btn.dataset.filter;
+      renderTasks();
+    });
+  });
+
+  // ---------------------------------------------------------
+  // STEP 8: Initial render when the page first loads
+  // ---------------------------------------------------------
+  renderTasks();
+</script>
+
+</body>
+</html>
